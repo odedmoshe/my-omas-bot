@@ -3,3 +3,6 @@ numpy
 yfinance
 openpyxl
 colorama
+requests
+lxml
+html5lib

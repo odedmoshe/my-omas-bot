@@ -1,3 +1,5 @@
+import requests
+from io import StringIO
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -33,14 +35,35 @@ class Config:
 # ============================================================================
 
 def get_sp500_tickers():
-    # רשימה מייצגת לדמו. בשימוש אמיתי ניתן להרחיב לכל ה-500
-    return [
-        'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL', 'META', 'TSLA', 'BRK-B', 'UNH', 'XOM',
-        'JNJ', 'JPM', 'V', 'PG', 'MA', 'HD', 'CVX', 'MRK', 'ABBV', 'LLY',
-        'PEP', 'COST', 'KO', 'AVGO', 'WMT', 'MCD', 'CSCO', 'TMO', 'ACN', 'ABT',
-        'DHR', 'NEE', 'LIN', 'ADBE', 'CRM', 'TXN', 'NKE', 'PM', 'RTX', 'ORCL',
-        'AMD', 'INTC', 'NFLX', 'UPS', 'QCOM', 'BA', 'HON', 'UNP', 'IBM', 'CAT'
-    ]
+    try:
+        print(f"{Fore.CYAN}Fetching full S&P 500 list from Wikipedia...{Style.RESET_ALL}")
+        url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+        
+        # זה התיקון: אנחנו שולחים כותרת שאומרת "שלום, אני דפדפן כרום רגיל"
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
+        # שימוש ב-requests עם הכותרות
+        response = requests.get(url, headers=headers)
+        
+        # המרת התוכן לפורמט ש-pandas יודע לקרוא
+        table = pd.read_html(StringIO(response.text))
+        df = table[0]
+        tickers = df['Symbol'].tolist()
+        
+        # תיקון פורמט למניות כמו ברקשייר האת'וויי (BRK.B -> BRK-B)
+        tickers = [t.replace('.', '-') for t in tickers]
+        
+        print(f"{Fore.GREEN}Successfully loaded {len(tickers)} tickers.{Style.RESET_ALL}")
+        return tickers
+
+    except Exception as e:
+        print(f"{Fore.RED}Error fetching list: {e}. Using backup list.{Style.RESET_ALL}")
+        return [
+            'AAPL', 'MSFT', 'AMZN', 'NVDA', 'GOOGL', 'META', 'TSLA', 'BRK-B', 'UNH', 'XOM',
+            'JNJ', 'JPM', 'V', 'PG', 'MA', 'HD', 'CVX', 'MRK', 'ABBV', 'LLY'
+        ]
 
 def download_data(tickers):
     print(f"{Fore.CYAN}Downloading data for {len(tickers)} stocks...{Style.RESET_ALL}")
